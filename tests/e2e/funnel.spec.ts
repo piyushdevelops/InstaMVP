@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { covers, CAMPAIGN } from "../../lib/covers";
 test("complete voting, recover reward, join and attribute a referred signup", async ({
   page,
   browser,
@@ -13,6 +14,10 @@ test("complete voting, recover reward, join and attribute a referred signup", as
       .click();
     await page.waitForTimeout(240);
   }
+  await expect(page.locator(".favourites-grid li")).toHaveCount(6);
+  await page
+    .getByRole("button", { name: "Continue to my ₹500 reward" })
+    .click();
   await page.getByLabel("Your first name").fill("Aanya");
   await page
     .getByLabel("Email address")
@@ -39,6 +44,10 @@ test("complete voting, recover reward, join and attribute a referred signup", as
     await friend.getByRole("button", { name: "Love this cover" }).click();
     await friend.waitForTimeout(240);
   }
+  await expect(friend.locator(".favourites-grid li")).toHaveCount(12);
+  await friend
+    .getByRole("button", { name: "Continue to my ₹500 reward" })
+    .click();
   await friend.getByLabel("Your first name").fill("Riya");
   await friend
     .getByLabel("Email address")
@@ -53,6 +62,42 @@ test("complete voting, recover reward, join and attribute a referred signup", as
   await expect(page.locator(".stats>div").nth(1)).toContainText("1");
   await expect(page.locator(".stats>div").nth(2)).toContainText("0");
   await context.close();
+});
+test("undo persists, recap handles no favourites and preorder terms are explicit", async ({
+  page,
+}) => {
+  await page.addInitScript(
+    ({ key, ballot }) => {
+      if (!localStorage.getItem(key))
+        localStorage.setItem(key, JSON.stringify(ballot));
+    },
+    {
+      key: `${CAMPAIGN}:votes`,
+      ballot: covers.map((c) => ({ coverId: c.id, liked: false })),
+    },
+  );
+  await page.goto("/");
+  await expect(
+    page.getByText("None of these felt right", { exact: false }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Undo last swipe" }).click();
+  await expect(page.locator(".counter")).toContainText("12");
+  await page.reload();
+  await expect(page.locator(".counter")).toContainText("12");
+  await page.getByRole("button", { name: "Love this cover" }).click();
+  await expect(page.locator(".favourites-grid li")).toHaveCount(1);
+  await expect(page.locator(".favourites-grid")).toContainText("New chapter");
+  await page
+    .getByRole("button", { name: "Continue to my ₹500 reward" })
+    .click();
+  await expect(page.getByLabel("Email address")).toBeVisible();
+  await expect(page.getByLabel("Phone", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText("During preorders only · exact dates to be announced"),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Just for our cover voters", { exact: false }),
+  ).toContainText("March 2027");
 });
 test("progress resumes, mobile page fits, and foreign-origin writes fail", async ({
   page,

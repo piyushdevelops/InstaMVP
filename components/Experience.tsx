@@ -10,7 +10,10 @@ import {
   Sparkles,
   ChevronLeft,
   CheckCheck,
+  Undo2,
 } from "lucide-react";
+import StarMark from "@/components/StarMark";
+import RewardTerms from "@/components/RewardTerms";
 import { covers, CAMPAIGN } from "@/lib/covers";
 import type { Dashboard, Vote } from "@/lib/types";
 type Stage =
@@ -18,6 +21,7 @@ type Stage =
   | "tutorial"
   | "vote"
   | "complete"
+  | "recap"
   | "capture"
   | "reward"
   | "onboard"
@@ -68,6 +72,9 @@ export default function Experience() {
     timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const key = `${CAMPAIGN}:votes`;
   const cover = covers[votes.length];
+  const favourites = covers.filter((c) =>
+    votes.some((v) => v.coverId === c.id && v.liked),
+  );
   const initialize = async () => {
     if (initializing.current) return;
     initializing.current = true;
@@ -94,7 +101,7 @@ export default function Experience() {
             )
           ) {
             setVotes(saved);
-            setStage(saved.length === covers.length ? "capture" : "vote");
+            setStage(saved.length === covers.length ? "recap" : "vote");
           }
         } catch {}
       }
@@ -115,7 +122,8 @@ export default function Experience() {
     if (!ready) return;
     let id: ReturnType<typeof setTimeout> | undefined;
     if (stage === "intro") id = setTimeout(() => setStage("tutorial"), 4600);
-    if (stage === "complete") id = setTimeout(() => setStage("capture"), 2100);
+    if (stage === "complete") id = setTimeout(() => setStage("recap"), 2100);
+    window.scrollTo({ top: 0, behavior: "instant" });
     heading.current?.focus({ preventScroll: true });
     return () => clearTimeout(id);
   }, [stage, ready]);
@@ -149,6 +157,17 @@ export default function Experience() {
       locked.current = false;
       if (next.length === covers.length) setStage("complete");
     }, 200);
+  }
+  function undo() {
+    if (locked.current || votes.length === 0 || dashboard) return;
+    const next = votes.slice(0, -1);
+    setVotes(next);
+    storage.set(key, JSON.stringify(next));
+    setDrag(0);
+    setLeaving(0);
+    start.current = null;
+    setFeedback("One more look. You can change your mind.");
+    setStage("vote");
   }
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -259,7 +278,7 @@ export default function Experience() {
                 <br />
                 We had
                 <br />a <em>feeling.</em>
-                <span className="asterisk">✳</span>
+                <StarMark className="asterisk" />
               </h1>
               <p>
                 Help us choose the covers
@@ -419,11 +438,19 @@ export default function Experience() {
               <p className="feedback" aria-live="polite">
                 {feedback}
               </p>
+              <button
+                className="undo-button"
+                onClick={undo}
+                disabled={votes.length === 0 || !!leaving}
+              >
+                <Undo2 size={16} />
+                Undo last swipe
+              </button>
             </section>
           )}
           {stage === "complete" && (
             <section className="completion">
-              <div className="celebration-mark">✳</div>
+              <StarMark className="celebration-mark" />
               <p className="eyebrow">ALL 12. ALL YOU.</p>
               <h1 ref={heading} tabIndex={-1}>
                 YOU HAVE
@@ -437,9 +464,56 @@ export default function Experience() {
                 <br />
                 Now, a little thank-you.
               </p>
-              <button className="text-button" onClick={() => change("capture")}>
-                See my reward
+              <button className="text-button" onClick={() => change("recap")}>
+                See my picks
               </button>
+            </section>
+          )}
+          {stage === "recap" && (
+            <section className="recap">
+              <p className="eyebrow">YOUR 2027 SHORTLIST</p>
+              <h1 ref={heading} tabIndex={-1}>
+                {favourites.length ? (
+                  <>
+                    Very <em>you.</em>
+                  </>
+                ) : (
+                  <>
+                    You know
+                    <br />
+                    <em>what you like.</em>
+                  </>
+                )}
+              </h1>
+              <p className="recap-intro">
+                {favourites.length
+                  ? `${favourites.length} ${favourites.length === 1 ? "cover caught" : "covers caught"} your eye. Here’s your personal edit.`
+                  : "None of these felt right—and that’s useful feedback too. Your votes still count, and your thank-you is waiting."}
+              </p>
+              {favourites.length > 0 && (
+                <ul className="favourites-grid">
+                  {favourites.map((c) => (
+                    <li key={c.id}>
+                      <img src={c.image} alt={`${c.name} planner cover`} />
+                      <h2>{c.name}</h2>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="fine">
+                {favourites.length
+                  ? "Your picks help shape the collection. Final designs may vary."
+                  : "No need to pick a favourite just to unlock your reward."}
+              </p>
+              <div className="recap-actions">
+                <button className="primary" onClick={() => change("capture")}>
+                  Continue to my ₹500 reward
+                </button>
+                <button className="undo-button" onClick={undo}>
+                  <Undo2 size={16} />
+                  Undo last swipe
+                </button>
+              </div>
             </section>
           )}
           {stage === "capture" && (
@@ -458,6 +532,7 @@ export default function Experience() {
                 <br />
                 Who should we make it out to?
               </p>
+              <RewardTerms />
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -574,11 +649,7 @@ export default function Experience() {
                     : "RESERVED · ACTIVATION PENDING"}
                 </span>
               </div>
-              <p className="fine">
-                One reward per person. Eligible 2027 planners only.
-                <br />
-                Final minimum spend and expiry will be announced at launch.
-              </p>
+              <RewardTerms />
               <button
                 className="primary"
                 onClick={() => copy(dashboard.coupon)}
@@ -648,11 +719,7 @@ export default function Experience() {
                   </div>
                 </li>
               </ol>
-              <div className="notice">
-                Preview programme: sample earnings use ₹100 per qualifying
-                order. Live credit rates and terms are not yet active. No
-                earnings for clicks or votes alone.
-              </div>
+              <RewardTerms referral />
               <button className="primary" onClick={join} disabled={busy}>
                 {busy ? "Creating your link…" : "Join & get my link"}
               </button>
@@ -782,7 +849,7 @@ export default function Experience() {
         </div>
         <footer>
           <span>MADE FOR YOUR NEXT CHAPTER</span>
-          <span>✳</span>
+          <StarMark className="footer-mark" />
           <span>THE JUNE SHOP</span>
         </footer>
       </div>
