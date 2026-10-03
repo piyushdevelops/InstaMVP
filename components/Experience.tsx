@@ -114,7 +114,7 @@ export default function Experience() {
   useEffect(() => {
     if (!ready) return;
     let id: ReturnType<typeof setTimeout> | undefined;
-    if (stage === "intro") id = setTimeout(() => setStage("tutorial"), 2600);
+    if (stage === "intro") id = setTimeout(() => setStage("tutorial"), 4600);
     if (stage === "complete") id = setTimeout(() => setStage("capture"), 2100);
     heading.current?.focus({ preventScroll: true });
     return () => clearTimeout(id);

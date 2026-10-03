@@ -197,7 +197,7 @@ input {
   height: 100%;
   width: 100%;
   background: var(--ink);
-  animation: load 2.6s linear;
+  animation: load 4.6s linear;
 }
 .tutorial h1 {
   margin-bottom: 20px;
