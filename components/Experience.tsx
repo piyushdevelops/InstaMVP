@@ -264,9 +264,7 @@ export default function Experience() {
       </div>
       <div className="app-shell">
         <header className="brand">
-          <span className="wordmark">
-            the june shop<span className="brand-dot">®</span>
-          </span>
+          <img className="brand-logo" src="/june-shop-logo.png" alt="The June Shop" width={550} height={450} />
           <span className="edition">THE 2027 EDIT</span>
         </header>
         <div className="screen" key={stage}>
@@ -628,7 +626,7 @@ export default function Experience() {
               </p>
               <div className="coupon">
                 <div className="coupon-top">
-                  <span>THE JUNE SHOP</span>
+                  <img className="coupon-logo" src="/june-shop-logo.png" alt="The June Shop" width={550} height={450} />
                   <Gift size={22} />
                 </div>
                 <div className="amount">

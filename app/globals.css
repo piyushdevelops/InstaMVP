@@ -117,16 +117,16 @@ input {
   align-items: center;
   padding-bottom: 28px;
 }
-.wordmark {
-  font-family: Georgia, serif;
-  letter-spacing: -1.2px;
-  font-size: 1.6rem;
-  white-space: nowrap;
+.brand-logo {
+  display: block;
+  width: 120px;
+  height: auto;
+  flex-shrink: 0;
 }
-.brand-dot {
-  font-size: 0.65rem;
-  vertical-align: super;
-  margin-left: 3px;
+.coupon-logo {
+  display: block;
+  width: 84px;
+  height: auto;
 }
 .edition {
   font-size: 0.63rem;
@@ -889,8 +889,8 @@ input::placeholder {
   .edition {
     font-size: 0.55rem;
   }
-  .wordmark {
-    font-size: 1.4rem;
+  .brand-logo {
+    width: 104px;
   }
   .voting h1 {
     font-size: 1.9rem;
